@@ -9,8 +9,10 @@ object SocketConnection {
     private const val SERVER_PORT = 8081
 
     private var socket: Socket? = null
-    private var output: ObjectOutputStream? = null
-    private var input: ObjectInputStream? = null
+    var output: ObjectOutputStream? = null
+    var input: ObjectInputStream? = null
+
+    fun isConnected(): Boolean = socket?.isConnected == true
 
     suspend fun connect(): Boolean = withContext(Dispatchers.IO) {
         try {
@@ -25,15 +27,31 @@ object SocketConnection {
     }
 
     suspend fun send(data: Any) = withContext(Dispatchers.IO) {
-        output?.writeObject(data)
-        output?.flush()
+        try {
+            output?.writeObject(data)
+            output?.flush()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     suspend fun receive(): Any? = withContext(Dispatchers.IO) {
-        input?.readObject()
+        try {
+            input?.readObject()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     fun disconnect() {
-        socket?.close()
+        try {
+            socket?.close()
+            output = null
+            input = null
+            socket = null
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }

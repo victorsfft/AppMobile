@@ -28,14 +28,13 @@ import com.iesfernandoaguilar.solsonafuentes.appmobile.ui.viewmodel.LoginViewMod
 
 @Composable
 fun LoginScreen(
-    onNavigateToRegister: () -> Unit,
-    onLoginSuccess: () -> Unit
+    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel(), // <-- Así se hace
+    onNavigateToHome: () -> Unit,
+    onNavigateToRegister: () -> Unit
 ) {
-    val socketConnection = remember { SocketConnection }
-    val loginRepository = remember { LoginRepository(socketConnection) }
-    val viewModel = remember { LoginViewModel(loginRepository) }
-
-    val state by viewModel.state.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     // Fondo degradado
     Box(
