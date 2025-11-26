@@ -10,5 +10,5 @@ data class Grupo(
     val usuarioPropietario: Usuario? = null,
     val vat: String? = null,
     val fechaCreacion: String? = null,
-    val configuracion: ConfiguracionGrupo? = null
+   // val configuracion: ConfiguracionGrupo? = null
 ) : Serializable

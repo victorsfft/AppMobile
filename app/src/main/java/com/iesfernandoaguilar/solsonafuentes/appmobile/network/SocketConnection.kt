@@ -1,5 +1,7 @@
 package com.iesfernandoaguilar.solsonafuentes.appmobile.network
 
+import android.content.ContentValues.TAG
+import android.util.Log
 import kotlinx.coroutines.*
 import java.io.*
 import java.net.Socket

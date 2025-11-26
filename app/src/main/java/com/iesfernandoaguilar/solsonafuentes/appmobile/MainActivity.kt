@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
 import com.iesfernandoaguilar.solsonafuentes.appmobile.ui.screens.GrupoScreen
-import com.iesfernandoaguilar.solsonafuentes.appmobile.ui.screens.auth.LoginScreen
+import com.iesfernandoaguilar.solsonafuentes.appmobile.ui.screens.LoginScreen
 import com.iesfernandoaguilar.solsonafuentes.appmobile.ui.screens.auth.RegisterScreen
 import com.iesfernandoaguilar.solsonafuentes.appmobile.ui.theme.AppTheme
 
@@ -24,8 +24,8 @@ class MainActivity : ComponentActivity() {
 
                 when (currentScreen) {
                     "login" -> LoginScreen(
-                        onNavigateToRegister = { currentScreen = "register" },
-                        onLoginSuccess = { currentScreen = "home" }
+                        onNavigateToHome = { currentScreen = "home" },
+                        onNavigateToRegister = { currentScreen = "register" }
                     )
                     "register" -> RegisterScreen(
                         onBack = { currentScreen = "login" },

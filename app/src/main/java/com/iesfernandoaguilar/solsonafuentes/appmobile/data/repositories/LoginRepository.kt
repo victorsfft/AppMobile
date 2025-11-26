@@ -7,66 +7,67 @@ import com.iesfernandoaguilar.solsonafuentes.appmobile.util.SecureUtils
 import com.iesfernandoaguilar.solsonafuentes.appmobile.util.Session
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.io.encoding.ExperimentalEncodingApi
+import android.util.Base64  // NO java.util.Base64Reintentar
 
 class LoginRepository {
+    private val TAG = "LoginRepository"
 
+    @OptIn(ExperimentalEncodingApi::class)
     suspend fun login(email: String, password: String): Result<Usuario> = withContext(Dispatchers.IO) {
         try {
-            // Conectar si no está conectado
             if (!SocketConnection.isConnected()) {
-                val connected = SocketConnection.connect()
-                if (!connected) {
-                    return@withContext Result.failure(Exception("No se pudo conectar al servidor"))
-                }
+                SocketConnection.connect()
             }
 
-            // Enviar credenciales
-            val mensaje = Mensaje(
-                tipo = "INICIAR_SESION",
-                contenido = hashMapOf(
-                    "email" to email,
-                    "password" to SecureUtils.hashPassword(password)
-                )
+            // PASO 1: Pedir el salt
+            val saltMsg = Mensaje(
+                tipo = "OBTENER_SALT",
+                contenido = hashMapOf()
             )
+            saltMsg.contenido["arg0"] = email  // El servidor espera args
 
-            SocketConnection.send(mensaje)
+            SocketConnection.send(saltMsg)
+            val saltResponse = SocketConnection.receive() as? Mensaje
 
-            // Recibir respuesta
-            val response = SocketConnection.receive() as? Mensaje
+            if (saltResponse?.tipo != "ENVIAR_SALT") {
+                return@withContext Result.failure(Exception("Error obteniendo salt"))
+            }
 
-            return@withContext when (response?.tipo) {
-                "INICIAR_SESION_EXITOSO" -> {
-                    val usuarioMap = response.contenido["usuario"] as? HashMap<*, *>
-                    if (usuarioMap != null) {
-                        val usuario = Usuario(
-                            idUsuario = (usuarioMap["idUsuario"] as? Number)?.toLong(),
-                            nombre = usuarioMap["nombre"] as? String ?: "",
-                            apellidos = usuarioMap["apellidos"] as? String ?: "",
-                            email = usuarioMap["email"] as? String ?: ""
-                        )
+            val respuesta = saltResponse.contenido["arg0"] as? String
+            if (respuesta == "no_salt") {
+                return@withContext Result.failure(Exception("Usuario no existe"))
+            }
 
-                        // Guardar en sesión
-                        Session.usuario = usuario
-                        Session.inputStream = SocketConnection.input
-                        Session.outputStream = SocketConnection.output
+            // PASO 2: Hashear contraseña con el salt recibido
+            val saltString = saltResponse.contenido["arg1"] as? String ?: ""
+            val saltBytes = Base64.decode(saltString, Base64.NO_WRAP)
+            val hashedPassword = SecureUtils.generarHashSHA512(password, saltBytes)
 
-                        Result.success(usuario)
-                    } else {
-                        Result.failure(Exception("Datos de usuario inválidos"))
-                    }
+            // PASO 3: Enviar login con contraseña hasheada
+            val loginMsg = Mensaje(
+                tipo = "INICIAR_SESION",
+                contenido = hashMapOf()
+            )
+            loginMsg.contenido["arg0"] = email
+            loginMsg.contenido["arg1"] = hashedPassword
+
+            SocketConnection.send(loginMsg)
+            val loginResponse = SocketConnection.receive() as? Mensaje
+
+            // Manejar respuesta
+            when (loginResponse?.tipo) {
+                "SESION_ACTIVA" -> {
+                    // Login exitoso
+                    Result.success(Usuario()) // Parsear usuario de la respuesta
                 }
-                "ERROR" -> {
-                    val mensaje = response.contenido["mensaje"] as? String ?: "Error desconocido"
-                    Result.failure(Exception(mensaje))
-                }
-                else -> {
-                    Result.failure(Exception("Respuesta inesperada del servidor"))
-                }
+                else -> Result.failure(Exception("Login fallido"))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
 
     suspend fun register(
         nombre: String,
@@ -85,7 +86,7 @@ class LoginRepository {
                     "nombre" to nombre,
                     "apellidos" to apellidos,
                     "email" to email,
-                    "password" to SecureUtils.hashPassword(password)
+                    "password" to SecureUtils.generarHashSHA512(password, SecureUtils.getSalt())
                 )
             )
 

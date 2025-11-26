@@ -13,8 +13,8 @@ class GrupoViewModel : ViewModel() {
     private val _empleados = MutableStateFlow<List<Usuario>>(emptyList())
     val empleados = _empleados.asStateFlow()
 
-    private val _subgrupos = MutableStateFlow<List<Subgrupo>>(emptyList())
-    val subgrupos = _subgrupos.asStateFlow()
+    //private val _subgrupos = MutableStateFlow<List<Subgrupo>>(emptyList())
+   // val subgrupos = _subgrupos.asStateFlow()
 
     private val _selectedMenu = MutableStateFlow("gestion")
     val selectedMenu = _selectedMenu.asStateFlow()
