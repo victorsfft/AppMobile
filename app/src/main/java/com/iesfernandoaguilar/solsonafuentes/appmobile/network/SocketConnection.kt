@@ -2,6 +2,8 @@ package com.iesfernandoaguilar.solsonafuentes.appmobile.network
 
 import android.content.ContentValues.TAG
 import android.util.Log
+import com.iesfernandoaguilar.solsonafuentes.appmobile.data.models.Mensaje
+import com.iesfernandoaguilar.solsonafuentes.appmobile.util.Serializador
 import kotlinx.coroutines.*
 import java.io.*
 import java.net.Socket
@@ -28,20 +30,17 @@ object SocketConnection {
         }
     }
 
-    suspend fun send(data: Any) = withContext(Dispatchers.IO) {
-        try {
-            output?.writeObject(data)
-            output?.flush()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+    suspend fun sendMessage(mensaje: Mensaje) = withContext(Dispatchers.IO) {
+        val encoded = Serializador.codificarMensaje(mensaje)
+        output?.writeUTF(encoded)
+        output?.flush()
     }
 
-    suspend fun receive(): Any? = withContext(Dispatchers.IO) {
+    suspend fun receiveMessage(): Mensaje? = withContext(Dispatchers.IO) {
         try {
-            input?.readObject()
+            val linea = input?.readUTF()
+            linea?.let { Serializador.decodificarMensaje(it) }
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
     }

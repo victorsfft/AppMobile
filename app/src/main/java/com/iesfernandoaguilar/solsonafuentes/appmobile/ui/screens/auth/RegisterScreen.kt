@@ -129,36 +129,8 @@ fun RegisterScreen(
 
                 // Botón Registrar
                 Button(
-                    onClick = {
-                        scope.launch {
-                            if (password != passwordConfirm) {
-                                errorMessage = "Las contraseñas no coinciden"
-                                return@launch
-                            }
+                    onClick = {},
 
-                            isLoading = true
-                            if (SocketConnection.connect()) {
-                                val registerData = hashMapOf(
-                                    "tipo" to "REGISTER",
-                                    "nombre" to nombre,
-                                    "apellidos" to apellidos,
-                                    "email" to email,
-                                    "password" to password
-                                )
-                                SocketConnection.send(registerData)
-
-                                val response = SocketConnection.receive() as? HashMap<*, *>
-                                if (response?.get("success") == true) {
-                                    onRegisterSuccess()
-                                } else {
-                                    errorMessage = response?.get("mensaje") as? String ?: "Error"
-                                }
-                            } else {
-                                errorMessage = "No se pudo conectar"
-                            }
-                            isLoading = false
-                        }
-                    },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading && email.isNotEmpty() && password.isNotEmpty()
                 ) {

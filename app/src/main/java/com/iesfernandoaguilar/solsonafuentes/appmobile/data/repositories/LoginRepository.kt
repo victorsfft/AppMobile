@@ -21,42 +21,30 @@ class LoginRepository {
             }
 
             // PASO 1: Pedir el salt
-            val saltMsg = Mensaje(
-                tipo = "OBTENER_SALT",
-                contenido = hashMapOf()
-            )
-            saltMsg.contenido["arg0"] = email  // El servidor espera args
+            val saltMsg = Mensaje(tipo = "OBTENER_SALT")
+            saltMsg.addArg(email)
+            SocketConnection.sendMessage(saltMsg)
 
-            SocketConnection.send(saltMsg)
-            val saltResponse = SocketConnection.receive() as? Mensaje
+            val saltResponse = SocketConnection.receiveMessage()
 
             if (saltResponse?.tipo != "ENVIAR_SALT") {
                 return@withContext Result.failure(Exception("Error obteniendo salt"))
             }
 
-            val respuesta = saltResponse.contenido["arg0"] as? String
-            if (respuesta == "no_salt") {
-                return@withContext Result.failure(Exception("Usuario no existe"))
-            }
+            val respuesta = saltResponse.args.getOrNull(0)
+            val saltString = saltResponse.args.getOrNull(1)
 
-            // PASO 2: Hashear contraseña con el salt recibido
-            val saltString = saltResponse.contenido["arg1"] as? String ?: ""
+
             val saltBytes = Base64.decode(saltString, Base64.NO_WRAP)
             val hashedPassword = SecureUtils.generarHashSHA512(password, saltBytes)
 
-            // PASO 3: Enviar login con contraseña hasheada
-            val loginMsg = Mensaje(
-                tipo = "INICIAR_SESION",
-                contenido = hashMapOf()
-            )
-            loginMsg.contenido["arg0"] = email
-            loginMsg.contenido["arg1"] = hashedPassword
-
-            SocketConnection.send(loginMsg)
-            val loginResponse = SocketConnection.receive() as? Mensaje
+            val loginMsg = Mensaje(tipo = "INICIAR_SESION")
+            loginMsg.addArg(email)
+            loginMsg.addArg(hashedPassword)
+            SocketConnection.sendMessage(loginMsg)
 
             // Manejar respuesta
-            when (loginResponse?.tipo) {
+            when (respuesta) {
                 "SESION_ACTIVA" -> {
                     // Login exitoso
                     Result.success(Usuario()) // Parsear usuario de la respuesta
@@ -68,7 +56,7 @@ class LoginRepository {
         }
     }
 
-
+    /*
     suspend fun register(
         nombre: String,
         apellidos: String,
@@ -106,4 +94,5 @@ class LoginRepository {
             Result.failure(e)
         }
     }
+    */
 }

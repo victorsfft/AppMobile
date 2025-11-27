@@ -18,7 +18,7 @@ class GrupoViewModel : ViewModel() {
 
     private val _selectedMenu = MutableStateFlow("gestion")
     val selectedMenu = _selectedMenu.asStateFlow()
-
+/*
     init {
         cargarDatos()
     }
@@ -31,8 +31,8 @@ class GrupoViewModel : ViewModel() {
                 "idGrupo" to Session.grupoActual?.idGrupo
             )
 
-            SocketConnection.send(mensaje)
-            val response = SocketConnection.receive() as? HashMap<*, *>
+            SocketConnection.sendMessage(mensaje)
+            val response = SocketConnection.receiveMessage() as? HashMap<*, *>
 
             if (response?.get("tipo") == "LISTA_EMPLEADOS") {
                 val listaEmpleados = response["empleados"] as? List<Usuario>
@@ -55,7 +55,7 @@ class GrupoViewModel : ViewModel() {
                 cargarDatos()
             }
         }
-    }
+    }*/
 
     fun anadirEmpleado() {
         // Igual que en GrupoController.anadirEmpleadoDialog()
